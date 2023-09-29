@@ -1,0 +1,138 @@
+import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.hardware.camera2.*;
+import android.media.Image;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.HandlerThread;
+import android.support.v7.app.AppCompatActivity;
+import android.util.Size;
+import android.view.Surface;
+import android.view.TextureView;
+import org.opencv.android.OpenCVLoader;
+import org.opencv.android.Utils;
+import org.opencv.core.CvType;
+import org.opencv.core.Mat;
+
+public class PrintAttackCountermeasureActivity extends AppCompatActivity {
+
+    private CameraCaptureSession captureSession;
+    private CameraDevice cameraDevice;
+    private Size previewSize;
+    private TextureView textureView;
+    private HandlerThread backgroundThread;
+    private Handler backgroundHandler;
+    private boolean processingFrame = false;
+
+    static {
+        if (!OpenCVLoader.initDebug()) {
+            // Handle initialization error
+        }
+    }
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_print_attack_countermeasure);
+
+        textureView = findViewById(R.id.textureView);
+        // Initialize and open the camera
+        openCamera();
+    }
+
+    private void openCamera() {
+        // Implement camera initialization code here
+        // Request permission to use the camera
+        // Set up CameraCaptureSession and CameraDevice
+        // Configure the camera to use the back camera (or front camera, depending on your requirements)
+    }
+
+    private void createCameraPreviewSession() {
+        // Implement camera preview setup here
+        // Set up a SurfaceTexture for the camera preview
+        // Configure the preview surface
+        // Start the camera preview
+        // Implement frame processing logic in the camera preview callback
+    }
+
+    private void processImage(Image image) {
+        if (!processingFrame) {
+            processingFrame = true;
+            // Convert the Image to a Mat (OpenCV format)
+            Mat mat = new Mat(image.getHeight(), image.getWidth(), CvType.CV_8UC1);
+            Utils.imageToMat(image, mat);
+            // Implement eye blink detection logic on the Mat (e.g., using OpenCV)
+            // If an eye blink is detected, consider it as a liveness confirmation
+            // Update UI or perform further actions accordingly
+            processingFrame = false;
+        }
+        image.close();
+    }
+
+    private void captureStillPicture() {
+        // Capture a still picture from the camera (e.g., when a button is pressed)
+        // Implement code to capture and process the still image
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        startBackgroundThread();
+        if (textureView.isAvailable()) {
+            openCamera();
+        } else {
+            textureView.setSurfaceTextureListener(surfaceTextureListener);
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        closeCamera();
+        stopBackgroundThread();
+        super.onPause();
+    }
+
+    private void startBackgroundThread() {
+        backgroundThread = new HandlerThread("CameraBackground");
+        backgroundThread.start();
+        backgroundHandler = new Handler(backgroundThread.getLooper());
+    }
+
+    private void stopBackgroundThread() {
+        backgroundThread.quitSafely();
+        try {
+            backgroundThread.join();
+            backgroundThread = null;
+            backgroundHandler = null;
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void closeCamera() {
+        // Release camera resources and close the CameraCaptureSession
+    }
+
+    private TextureView.SurfaceTextureListener surfaceTextureListener = new TextureView.SurfaceTextureListener() {
+        @Override
+        public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
+            openCamera();
+        }
+
+        @Override
+        public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) {
+            // Handle surface size change
+        }
+
+        @Override
+        public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
+            return false;
+        }
+
+        @Override
+        public void onSurfaceTextureUpdated(SurfaceTexture surface) {
+            // Handle surface texture update
+        }
+    };
+}
